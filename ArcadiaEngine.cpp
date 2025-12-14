@@ -2,17 +2,19 @@
 // TODO: Implement all the functions below according to the assignment requirements
 
 #include "ArcadiaEngine.h"
-#include <bits/stdc++.h>
+#include <vector>
+#include <string>
+#include <queue>
+#include <algorithm>
+#include <functional>
+#include <cmath>
+#include <climits>
 using namespace std;
 
 
 #define table_size 101
 #define empty_slot -1
 #define deleted_slot -2
-
-
-
-
 
 // =========================================================
 // PART A: DATA STRUCTURES (Concrete Implementations)
@@ -84,12 +86,13 @@ public:
             int probe = (index + i * step) % table_size;
 
             if (table[probe].id == empty_slot)
-                return "Not Found";
+                return "";
 
             if (table[probe].id == playerID)
                 return table[probe].name;
         }
-        return "Not Found";
+        return "";
+
     }
 };
 
@@ -532,9 +535,6 @@ int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
     }
 
     return totalsum - 2*firstHalf;
-
-
-
 }
 
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& items) {
@@ -558,7 +558,6 @@ int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& it
         }
     }
         return dp[n][capacity];
-
 }
 
 long long InventorySystem::countStringPossibilities(string s) {
@@ -590,26 +589,136 @@ long long InventorySystem::countStringPossibilities(string s) {
 // =========================================================
 
 bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, int dest) {
-    // TODO: Implement path existence check using BFS or DFS
-    // edges are bidirectional
+    if (source == dest)
+        return true;
+
+    vector<vector<int>> adj(n);
+    for (auto& e : edges) {
+        int u = e[0];
+        int v = e[1];
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    vector<bool> visited(n, false);
+    queue<int> q;
+    q.push(source);
+    visited[source] = true;
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+
+        if (u == dest) return true;
+
+        for (int v : adj[u]) {
+            if (!visited[v]) {
+                visited[v] = true;
+                q.push(v);
+            }
+        }
+    }
+
     return false;
 }
 
 long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate,
                                        vector<vector<int>>& roadData) {
-    // TODO: Implement Minimum Spanning Tree (Kruskal's or Prim's)
-    // roadData[i] = {u, v, goldCost, silverCost}
-    // Total cost = goldCost * goldRate + silverCost * silverRate
-    // Return -1 if graph cannot be fully connected
-    return -1;
+    struct Edge {
+        int u, v;
+        long long cost;
+    };
+
+    vector<Edge> edges;
+    for (auto& r : roadData) {
+        int u = r[0];
+        int v = r[1];
+        long long cost = r[2] * goldRate + r[3] * silverRate;
+        edges.push_back({u, v, cost});
+    }
+
+    sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b) {
+        return a.cost < b.cost;
+    });
+
+    vector<int> parent(n), rank(n, 0);
+    for (int i = 0; i < n; i++) parent[i] = i;
+
+    function<int(int)> find = [&](int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]);
+        return parent[x];
+    };
+
+    auto unite = [&](int a, int b) {
+        a = find(a);
+        b = find(b);
+        if (a == b) return false;
+
+        if (rank[a] < rank[b]) swap(a, b);
+        parent[b] = a;
+        if (rank[a] == rank[b]) rank[a]++;
+        return true;
+    };
+
+    long long totalCost = 0;
+    int usedEdges = 0;
+
+    for (auto& e : edges) {
+        if (unite(e.u, e.v)) {
+            totalCost += e.cost;
+            usedEdges++;
+        }
+    }
+
+    if (usedEdges != n - 1) return -1;
+    return totalCost;
 }
 
 string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
-    // TODO: Implement All-Pairs Shortest Path (Floyd-Warshall)
-    // Sum all shortest distances between unique pairs (i < j)
-    // Return the sum as a binary string
-    // Hint: Handle large numbers carefully
-    return "0";
+    const long long INF = 1e18;
+
+    vector<vector<long long>> dist(n, vector<long long>(n, INF));
+    for (int i = 0; i < n; i++) {
+        dist[i][i] = 0;
+    }
+
+    for (auto& r : roads) {
+        int u = r[0];
+        int v = r[1];
+        int w = r[2];
+        dist[u][v] = min(dist[u][v], (long long)w);
+        dist[v][u] = min(dist[v][u], (long long)w);
+    }
+
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (dist[i][k] < INF && dist[k][j] < INF) {
+                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+                }
+            }
+        }
+    }
+
+    long long totalSum = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (dist[i][j] < INF) {
+                totalSum += dist[i][j];
+            }
+        }
+    }
+
+    if (totalSum == 0)
+        return "0";
+
+    string binary = "";
+    while (totalSum > 0) {
+        binary = char('0' + (totalSum % 2)) + binary;
+        totalSum /= 2;
+    }
+    return binary;
 }
 
 // =========================================================
@@ -666,5 +775,4 @@ extern "C" {
     AuctionTree* createAuctionTree() {
         return new ConcreteAuctionTree();
     }
-
 }
