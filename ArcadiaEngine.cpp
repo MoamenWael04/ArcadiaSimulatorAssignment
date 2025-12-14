@@ -102,14 +102,60 @@ int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
     // TODO: Implement partition problem using DP
     // Goal: Minimize |sum(subset1) - sum(subset2)|
     // Hint: Use subset sum DP to find closest sum to total/2
-    return 0;
+    // return 0;
+    int totalsum = 0;
+    for (int c : coins) totalsum += c;
+    int target = totalsum / 2;
+
+    vector<vector<bool>> dp(n+1 , vector<bool>(target+1 , false));
+    dp[0][0] = true;
+
+    for (int i = 1; i <=n;  i++) {
+        int coin = coins[i-1];
+        for (int j = 0; j <= target; j++) {
+            dp[i][j] = dp[i-1][j];
+            if (j >= coin) {
+                dp[i][j] = dp[i][j] || dp[i-1][j-coin];
+            }
+        }
+    }
+
+    int firstHalf = 0;
+    for (int i = target; i >= 0; i--) {
+        if (dp[n][i]){
+            firstHalf = i;
+            break;
+        }
+    }
+
+    return totalsum - 2*firstHalf;
+
+
+
 }
 
 int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& items) {
     // TODO: Implement 0/1 Knapsack using DP
     // items = {weight, value} pairs
     // Return maximum value achievable within capacity
-    return 0;
+
+    int n = items.size();
+    vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0));
+    for (int i = 1; i <= n; i++) {
+        int weight = items[i - 1].first;
+        int value = items[i - 1].second;
+
+        for (int w = 1; w <= capacity; w++) {
+            if (weight <= w) {
+                dp[i][w] = max(dp[i - 1][w], dp[i - 1][w - weight] + value);
+            }
+            else {
+                dp[i][w] = dp[i - 1][w];
+            }
+        }
+    }
+        return dp[n][capacity];
+
 }
 
 long long InventorySystem::countStringPossibilities(string s) {
@@ -117,7 +163,23 @@ long long InventorySystem::countStringPossibilities(string s) {
     // Rules: "uu" can be decoded as "w" or "uu"
     //        "nn" can be decoded as "m" or "nn"
     // Count total possible decodings
-    return 0;
+    // return 0;
+    const int MOD = 1e9 + 7;
+    int n = s.size();
+
+    vector<long long> dp(n+1 , 0);
+    dp[0] = 1;
+
+    for (int i = 1; i <= n ; i++) {
+        dp[i] = dp[i-1];
+        if (i>=2) {
+            if ((s[i-2]=='u' && s[i-1]=='u' ) ||
+                (s[i-2]=='n' && s[i-1]=='n')){
+                dp[i] = (dp[i] + dp[i-2]) % MOD;
+                }
+        }
+    }
+    return dp[n];
 }
 
 // =========================================================
@@ -175,8 +237,4 @@ extern "C" {
     AuctionTree* createAuctionTree() { 
         return new ConcreteAuctionTree(); 
     }
-}
-
-int main() {
-    cout << "Hello, World!" << endl;
 }
