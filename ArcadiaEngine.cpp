@@ -677,57 +677,47 @@ long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long lo
 
 string WorldNavigator::sumMinDistancesBinary(int n, vector<vector<int>>& roads) {
     const long long INF = 1e18;
-    
-    vector<vector<pair<int, int>>> adj(n);
+
+    vector<vector<long long>> dist(n, vector<long long>(n, INF));
+    for (int i = 0; i < n; i++) {
+        dist[i][i] = 0;
+    }
+
     for (auto& r : roads) {
         int u = r[0];
         int v = r[1];
         int w = r[2];
-        adj[u].push_back({v, w});
-        adj[v].push_back({u, w}); // undirected
+        dist[u][v] = min(dist[u][v], (long long)w);
+        dist[v][u] = min(dist[v][u], (long long)w);
     }
 
-    long long totalSum = 0;
-    
-    for (int src = 0; src < n; src++) {
-        vector<long long> dist(n, INF);
-        dist[src] = 0;
-
-        priority_queue<pair<long long, int>,
-                       vector<pair<long long, int>>,
-                       greater<pair<long long, int>>> pq;
-
-        pq.push({0, src});
-
-        while (!pq.empty()) {
-            auto [d, u] = pq.top();
-            pq.pop();
-
-            if (d > dist[u]) continue;
-
-            for (auto& [v, w] : adj[u]) {
-                if (dist[v] > dist[u] + w) {
-                    dist[v] = dist[u] + w;
-                    pq.push({dist[v], v});
+    for (int k = 0; k < n; k++) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (dist[i][k] < INF && dist[k][j] < INF) {
+                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
                 }
             }
         }
-        
-        for (int v = src + 1; v < n; v++) {
-            if (dist[v] < INF) {
-                totalSum += dist[v];
+    }
+
+    long long totalSum = 0;
+    for (int i = 0; i < n; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (dist[i][j] < INF) {
+                totalSum += dist[i][j];
             }
         }
     }
-    
-    if (totalSum == 0) return "0";
+
+    if (totalSum == 0)
+        return "0";
 
     string binary = "";
     while (totalSum > 0) {
         binary = char('0' + (totalSum % 2)) + binary;
         totalSum /= 2;
     }
-
     return binary;
 }
 
