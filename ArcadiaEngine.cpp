@@ -628,6 +628,13 @@ long long InventorySystem::countStringPossibilities(string s) {
 // =========================================================
 
 bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, int dest) {
+
+    if (n <= 0)
+        return false;
+
+    if (source < 0 || source >= n || dest < 0 || dest >= n)
+        return false;
+
     if (source == dest)
         return true;
 
@@ -648,7 +655,8 @@ bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, i
         int u = q.front();
         q.pop();
 
-        if (u == dest) return true;
+        if (u == dest)
+            return true;
 
         for (int v : adj[u]) {
             if (!visited[v]) {
@@ -660,6 +668,7 @@ bool WorldNavigator::pathExists(int n, vector<vector<int>>& edges, int source, i
 
     return false;
 }
+
 
 long long WorldNavigator::minBribeCost(int n, int m, long long goldRate, long long silverRate,
                                        vector<vector<int>>& roadData) {

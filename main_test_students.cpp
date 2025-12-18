@@ -206,5 +206,5 @@ int main() {
 
     runner.printSummary();
 
-    // return 0;
+    return 0;
 }
