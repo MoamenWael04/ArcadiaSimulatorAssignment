@@ -37,10 +37,9 @@ private:
     int currentSize;
 
     int hash1(int key) {
-        const double A = 0.6180339887;
-        double frac = fmod(key * A, 1.0);
-        return int(table_size * frac);
+        return key % table_size;
     }
+
 
     int hash2(int key) {
         const int PRIME = 97;
@@ -65,6 +64,11 @@ public:
         for (int i = 0; i < table_size; i++) {
             int probe = (index + i * step) % table_size;
 
+            if(table[probe].id == playerID){
+                table[probe].name = name;
+                return;
+            }
+
             if (table[probe].id == empty_slot || table[probe].id == deleted_slot) {
                 //cout << "New to player table : "<<name<<" with id "<<playerID<<endl;
                 table[probe].id = playerID;
@@ -86,12 +90,12 @@ public:
             int probe = (index + i * step) % table_size;
 
             if (table[probe].id == empty_slot)
-                return "";
+                return "Not Found";
 
             if (table[probe].id == playerID)
                 return table[probe].name;
         }
-        return "";
+        return "Not Found";
 
     }
 };
@@ -135,6 +139,17 @@ public:
         currentLevel = 0;
         header = new SkipNode(Player(-1, "", INT_MAX), MAX_LEVEL);
     }
+
+     ~ConcreteLeaderboard() {
+    SkipNode* current = header;
+
+    while (current != nullptr) {
+        SkipNode* next = current->forward[0];
+        delete current;
+        current = next;
+        }
+    }
+
 
     void addScore(int playerID, int score) override {
 
@@ -247,13 +262,13 @@ class ConcreteAuctionTree : public AuctionTree {
 private:
     RBNode* root = nullptr;
 
-    /* ---------- Comparison (price, then ID) ---------- */
+
     bool isLess(int price1, int id1, int price2, int id2) {
         if (price1 != price2) return price1 < price2;
         return id1 < id2;
     }
 
-    /* ---------- Rotations ---------- */
+
     void leftRotate(RBNode* x) {
         RBNode* nParent = x->right;
         if (x == root) root = nParent;
@@ -288,7 +303,7 @@ private:
         x->parent = nParent;
     }
 
-    /* ---------- Fix Red-Red ---------- */
+
     void fixRedRed(RBNode* x) {
         if (x == root) {
             x->color = BLACK;
@@ -327,7 +342,7 @@ private:
         }
     }
 
-    /* ---------- BST Insert ---------- */
+
     void bstInsert(RBNode* node) {
         RBNode* temp = root;
         while (true) {
@@ -350,7 +365,7 @@ private:
         }
     }
 
-    /* ---------- O(N) Search by ID (Allowed) ---------- */
+
     RBNode* findByID(RBNode* node, int id) {
         if (!node) return nullptr;
         if (node->itemID == id) return node;
@@ -359,7 +374,7 @@ private:
         return findByID(node->right, id);
     }
 
-    /* ---------- RB Deletion Helpers ---------- */
+
     RBNode* successor(RBNode* x) {
         while (x->left) x = x->left;
         return x;
@@ -469,11 +484,21 @@ private:
          << ", Color=" << (node->color == RED ? "R" : "B") << ") ";
     inorder(node->right);
 }
+    void deleteSubtree(RBNode* node) {
+    if (!node) return;
+
+    deleteSubtree(node->left);
+    deleteSubtree(node->right);
+    delete node;
+    }
+
 
 public:
     ConcreteAuctionTree() {}
+     ~ConcreteAuctionTree() {
+    deleteSubtree(root);
+    }
 
-    /* ---------- Insert ---------- */
     void insertItem(int itemID, int price) override {
         RBNode* node = new RBNode(itemID, price);
         if (!root) {
@@ -485,7 +510,7 @@ public:
         fixRedRed(node);
     }
 
-    /* ---------- Delete by ID ---------- */
+
     void deleteItem(int itemID) override {
         if (!root) return;
         RBNode* v = findByID(root, itemID);
