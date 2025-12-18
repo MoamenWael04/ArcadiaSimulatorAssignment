@@ -510,6 +510,8 @@ int InventorySystem::optimizeLootSplit(int n, vector<int>& coins) {
     // Hint: Use subset sum DP to find closest sum to total/2
     // return 0;
     int totalsum = 0;
+    if (n == 0 || coins.empty())
+        return 0;
     for (int c : coins) totalsum += c;
     int target = totalsum / 2;
 
@@ -541,6 +543,8 @@ int InventorySystem::maximizeCarryValue(int capacity, vector<pair<int, int>>& it
     // TODO: Implement 0/1 Knapsack using DP
     // items = {weight, value} pairs
     // Return maximum value achievable within capacity
+    if (capacity == 0 || items.empty())
+        return 0;
 
     int n = items.size();
     vector<vector<int>> dp(n + 1, vector<int>(capacity + 1, 0));
@@ -566,6 +570,10 @@ long long InventorySystem::countStringPossibilities(string s) {
     //        "nn" can be decoded as "m" or "nn"
     // Count total possible decodings
     // return 0;
+
+    if (s.empty())
+        return 1;
+
     const int MOD = 1e9 + 7;
     int n = s.size();
 
@@ -776,3 +784,5 @@ extern "C" {
         return new ConcreteAuctionTree();
     }
 }
+
+
